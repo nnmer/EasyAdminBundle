@@ -186,6 +186,9 @@ class AdminController extends Controller
     // It's executed just before removing the item with Doctrine and it allows
     // to modify the item being deleted before removing it
     protected function preRemoveEntity($entity);
+    
+    // It's executed just after removing the item with Doctrine
+    protected function postRemoveEntity($entity);
 }
 ```
 
@@ -199,6 +202,9 @@ class AdminController extends Controller
 
     // It's executed just before saving the changes of a modified entity. It
     // allows you to modify the entity even further before it's saved
+    protected function preUpdateEntity($entity)
+    
+    // It's executed just after saving the changes of a modified entity.
     protected function preUpdateEntity($entity)
 }
 ```
@@ -219,6 +225,9 @@ class AdminController extends Controller
     // It's executed just before saving the item for the first time. It allows
     // you to modify the entity before it's saved
     protected function prePersistEntity($entity)
+    
+    // It's executed just after saving the item for the first time.
+    protected function prePersistEntity($entity)    
 }
 ```
 
@@ -319,6 +328,9 @@ protected function createNew<EntityName>Entity();
 // ...
 protected function prePersist<EntityName>Entity();
 protected function preUpdate<EntityName>Entity();
+// ... 
+protected function postPersist<EntityName>Entity();
+protected function postUpdate<EntityName>Entity();
 // ...
 ```
 

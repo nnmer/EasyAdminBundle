@@ -205,6 +205,8 @@ class AdminController extends Controller
             $this->executeDynamicMethod('preUpdate<EntityName>Entity', array($entity));
             $this->em->flush();
 
+            $this->executeDynamicMethod('postUpdate<EntityName>Entity', array($entity));
+
             $this->dispatch(EasyAdminEvents::POST_UPDATE, array('entity' => $entity));
 
             $refererUrl = $this->request->query->get('referer', '');
@@ -281,6 +283,8 @@ class AdminController extends Controller
             $this->em->persist($entity);
             $this->em->flush();
 
+            $this->executeDynamicMethod('postPersist<EntityName>Entity', array($entity));
+
             $this->dispatch(EasyAdminEvents::POST_PERSIST, array('entity' => $entity));
 
             $refererUrl = $this->request->query->get('referer', '');
@@ -331,6 +335,8 @@ class AdminController extends Controller
 
             $this->em->remove($entity);
             $this->em->flush();
+
+            $this->executeDynamicMethod('postRemove<EntityName>Entity', array($entity));
 
             $this->dispatch(EasyAdminEvents::POST_REMOVE, array('entity' => $entity));
         }
@@ -447,6 +453,34 @@ class AdminController extends Controller
      * @param object $entity
      */
     protected function preRemoveEntity($entity)
+    {
+    }
+
+
+    /**
+     * Allows applications to execute logic after the new entity was created
+     *
+     * @param object $entity
+     */
+    protected function postPersistEntity($entity)
+    {
+    }
+
+    /**
+     * Allows applications to execute logic after the new entity was updated
+     *
+     * @param object $entity
+     */
+    protected function postUpdateEntity($entity)
+    {
+    }
+
+    /**
+     * Allows applications to execute logic after the new entity was deleted
+     *
+     * @param object $entity
+     */
+    protected function postRemoveEntity($entity)
     {
     }
 
