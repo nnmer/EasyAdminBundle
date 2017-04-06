@@ -11,12 +11,13 @@
 
 namespace JavierEguiluz\Bundle\EasyAdminBundle\DependencyInjection;
 
+use JavierEguiluz\Bundle\EasyAdminBundle\Form\Util\LegacyFormHelper;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\Config\FileLocator;
 
 /**
  * Resolves all the backend configuration values and most of the entities
@@ -48,17 +49,19 @@ class EasyAdminExtension extends Extension
             $container->removeDefinition('easyadmin.listener.exception');
         }
 
-        // compile commonly used classes
-        $this->addClassesToCompile(array(
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\Configuration\\ConfigManager',
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\Event\\EasyAdminEvents',
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\EventListener\\ExceptionListener',
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\EventListener\\RequestPostInitializeListener',
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\Form\\Extension\EasyAdminExtension',
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\Search\\Paginator',
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\Search\\QueryBuilder',
-            'JavierEguiluz\\Bundle\\EasyAdminBundle\\Twig\\EasyAdminTwigExtension',
-        ));
+        // compile commonly used classes on PHP < 7.0
+        if (PHP_VERSION_ID < 70000) {
+            $this->addClassesToCompile(array(
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\Configuration\\ConfigManager',
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\Event\\EasyAdminEvents',
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\EventListener\\ExceptionListener',
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\EventListener\\RequestPostInitializeListener',
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\Form\\Extension\EasyAdminExtension',
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\Search\\Paginator',
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\Search\\QueryBuilder',
+                'JavierEguiluz\\Bundle\\EasyAdminBundle\\Twig\\EasyAdminTwigExtension',
+            ));
+        }
 
         $this->ensureBackwardCompatibility($container);
     }
@@ -86,8 +89,7 @@ class EasyAdminExtension extends Extension
         }
 
         // BC for legacy form component
-        $useLegacyFormComponent = false === class_exists('Symfony\\Component\\Form\\Util\\StringUtil');
-        if (!$useLegacyFormComponent) {
+        if (!LegacyFormHelper::useLegacyFormComponent()) {
             $container
                 ->getDefinition('easyadmin.form.type')
                 ->clearTag('form.type')
@@ -96,6 +98,15 @@ class EasyAdminExtension extends Extension
         }
     }
 
+    /**
+     * This method allows to define the entity configuration is several files.
+     * Without this, Symfony doesn't merge correctly the 'entities' config key
+     * defined in different files.
+     *
+     * @param array $configs
+     *
+     * @return array
+     */
     private function processConfigFiles(array $configs)
     {
         $existingEntityNames = array();

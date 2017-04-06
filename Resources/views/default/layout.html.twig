@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noodp, noimageindex, notranslate, nocache" />
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <meta name="generator" content="EasyAdmin" />
 
@@ -42,6 +43,11 @@
             <script src="{{ asset('bundles/easyadmin/javascript/easyadmin-all.min.js') }}"></script>
         {% endblock head_javascript %}
 
+        {% if easyadmin_config('design.rtl') %}
+            <link rel="stylesheet" href="{{ asset('bundles/easyadmin/stylesheet/bootstrap-rtl.min.css') }}">
+            <link rel="stylesheet" href="{{ asset('bundles/easyadmin/stylesheet/adminlte-rtl.min.css') }}">
+        {% endif %}
+
         <!--[if lt IE 9]>
             <script src="{{ asset('bundles/easyadmin/stylesheet/html5shiv.min.css') }}"></script>
             <script src="{{ asset('bundles/easyadmin/stylesheet/respond.min.css') }}"></script>
@@ -69,15 +75,36 @@
 
                     <div class="navbar-custom-menu">
                     {% block header_custom_menu %}
+                        {# logout_path() without arguments only works in Symfony >= 2.7 #}
+                        {% set _is_logout_supported = constant('Symfony\\Component\\HttpKernel\\Kernel::VERSION_ID') >= 20700 %}
                         <ul class="nav navbar-nav">
-                            <li class="user user-menu">
+                            <li class="dropdown user user-menu">
                                 {% block user_menu %}
                                     <span class="sr-only">{{ 'user.logged_in_as'|trans(domain = 'EasyAdminBundle') }}</span>
-                                    <i class="hidden-xs fa fa-user"></i>
-                                    {% if app.user|default %}
+
+                                    {% if app.user|default(false) == false %}
+                                        <i class="hidden-xs fa fa-user-times"></i>
+                                        {{ 'user.anonymous'|trans(domain = 'EasyAdminBundle') }}
+                                    {% elseif not _is_logout_supported %}
+                                        <i class="hidden-xs fa fa-user"></i>
                                         {{ app.user.username|default('user.unnamed'|trans(domain = 'EasyAdminBundle')) }}
                                     {% else %}
-                                        {{ 'user.anonymous'|trans(domain = 'EasyAdminBundle') }}
+                                        <div class="btn-group">
+                                            <button type="button" class="btn" data-toggle="dropdown">
+                                                <i class="hidden-xs fa fa-user"></i>
+                                                {{ app.user.username|default('user.unnamed'|trans(domain = 'EasyAdminBundle')) }}
+                                            </button>
+                                            <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                                <span class="caret"></span>
+                                            </button>
+                                            <ul class="dropdown-menu" role="menu">
+                                                {% block user_menu_dropdown %}
+                                                <li>
+                                                    <a href="{{ logout_path() }}"><i class="fa fa-sign-out"></i> {{ 'user.signout'|trans(domain = 'EasyAdminBundle') }}</a>
+                                                </li>
+                                                {% endblock user_menu_dropdown %}
+                                            </ul>
+                                        </div>
                                     {% endif %}
                                 {% endblock user_menu %}
                             </li>
@@ -112,6 +139,15 @@
                 {% block content_header %}
                     <h1 class="title">{% block content_title %}{% endblock %}</h1>
                 {% endblock content_header %}
+                {% block content_help %}
+                    {% if _entity_config is defined and _entity_config[app.request.query.get('action')]['help']|default(false) %}
+                        <div class="box box-widget help-entity">
+                            <div class="box-body">
+                                {{ _entity_config[app.request.query.get('action')]['help']|trans|raw }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endblock content_help %}
                 </section>
 
                 <section id="main" class="content">

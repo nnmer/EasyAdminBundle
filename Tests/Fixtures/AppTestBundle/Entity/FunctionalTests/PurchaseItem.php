@@ -20,14 +20,12 @@ use Doctrine\ORM\Mapping as ORM;
 class PurchaseItem
 {
     /**
-     * The identifier of the image.
-     *
      * @var int
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
      */
-    protected $id;
+    protected $id = null;
 
     /**
      * The ordered quantity.
@@ -40,7 +38,7 @@ class PurchaseItem
     /**
      * The tax rate to apply on the product.
      *
-     * @var string
+     * @var float
      * @ORM\Column(type="decimal", name="tax_rate")
      */
     protected $taxRate = 0.21;
@@ -49,10 +47,16 @@ class PurchaseItem
      * The ordered product.
      *
      * @var Product
-     * @ORM\ManyToOne(targetEntity="Product")
+     * @ORM\ManyToOne(targetEntity="Product", inversedBy="purchasedItems")
      * @ORM\JoinColumn(name="product_id", referencedColumnName="id")
-     **/
+     */
     protected $product;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="Purchase", inversedBy="purchasedItems")
+     * @ORM\JoinColumn(name="purchase_id", referencedColumnName="id")
+     */
+    protected $purchase;
 
     /**
      * @param Product $product
@@ -68,6 +72,22 @@ class PurchaseItem
     public function getProduct()
     {
         return $this->product;
+    }
+
+    /**
+     * @param Purchase $purchase
+     */
+    public function setPurchase($purchase)
+    {
+        $this->purchase = $purchase;
+    }
+
+    /**
+     * @return Purchase
+     */
+    public function getPurchase()
+    {
+        return $this->purchase;
     }
 
     /**
@@ -87,7 +107,7 @@ class PurchaseItem
     }
 
     /**
-     * @param string $taxRate
+     * @param float $taxRate
      */
     public function setTaxRate($taxRate)
     {
@@ -95,7 +115,7 @@ class PurchaseItem
     }
 
     /**
-     * @return string
+     * @return float
      */
     public function getTaxRate()
     {
@@ -110,7 +130,6 @@ class PurchaseItem
         return $this->id;
     }
 
-    /** {@inheritdoc} */
     public function __toString()
     {
         return $this->getProduct()->getName().' [x'.$this->getQuantity().']: '.$this->getTotalPrice();

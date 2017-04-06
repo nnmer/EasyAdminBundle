@@ -16,32 +16,55 @@ namespace JavierEguiluz\Bundle\EasyAdminBundle\Exception;
  */
 class BaseException extends \RuntimeException
 {
-    // the HTTP status code of the Response created for the exception
-    protected $message;
-    // this is the error message that can be safely displayed to end users
-    private $safeMessage;
-    // this is the full error message displayed only in 'dev' environment and logs
-    private $statusCode;
+    /** @var ExceptionContext */
+    private $context;
 
     /**
-     * @param string $errorMessage
-     * @param string $proposedSolution
-     * @param int    $statusCode
+     * @param ExceptionContext $context
      */
-    public function __construct($errorMessage, $proposedSolution = '', $statusCode = 500)
+    public function __construct(ExceptionContext $context)
     {
-        $this->safeMessage = $errorMessage;
-        $this->message = sprintf('Error: %s Solution: %s', $errorMessage, $proposedSolution);
-        $this->statusCode = $statusCode;
+        $this->context = $context;
+        parent::__construct($this->context->getDebugMessage());
     }
 
-    public function getSafeMessage()
+    /**
+     * @return ExceptionContext
+     */
+    public function getContext()
     {
-        return $this->safeMessage;
+        return $this->context;
     }
 
+    /**
+     * @return string The message that can safely be displayed to end-users because it doesn't contain sensitive data
+     */
+    public function getPublicMessage()
+    {
+        return $this->context->getPublicMessage();
+    }
+
+    /**
+     * @return string The full exception message that is logged and it can contain sensitive data
+     */
+    public function getDebugMessage()
+    {
+        return $this->context->getDebugMessage();
+    }
+
+    /**
+     * @return array
+     */
+    public function getParameters()
+    {
+        return $this->context->getParameters();
+    }
+
+    /**
+     * @return int
+     */
     public function getStatusCode()
     {
-        return $this->statusCode;
+        return $this->context->getStatusCode();
     }
 }

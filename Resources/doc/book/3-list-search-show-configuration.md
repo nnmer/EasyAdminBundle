@@ -91,6 +91,38 @@ easy_admin:
         title: '%%entity_label%% (#%%entity_id%%)'
 ```
 
+### Display a Help Message in the Page
+
+Entities can define a global help message that is displayed below the title of
+the page. This is useful to add instructions or warning messages for the end
+users (e.g. "The upload process can take a lot of time (don't close the browser
+window)").
+
+The help message is defined with the `help` configuration option, which can be
+added to the entity (all views display the same message) and to each of the
+entity views:
+
+```yaml
+# app/config/config.yml
+easy_admin:
+    entities:
+        Customer:
+            class: AppBundle\Entity\Customer
+            help: 'Global message displayed in all views'
+            # ...
+            list:
+                help: 'The list view overrides the global help message'
+                # ...
+            show:
+                # 'help' is not defined, so the global help message is displayed
+                # ...
+            search:
+                # use the null value to not display the inherited global help message
+                help: null
+                # ...
+        # ...
+```
+
 ### Customize the Number of Rows Displayed
 
 By default, listings in the `list` and `search` display a maximum of 15 rows.
@@ -195,6 +227,7 @@ These are the options that you can define for each field:
   * `css_class` (optional): the CSS class applied to the parent HTML element that
     encloses the field contents. In the `list` and `search` views, this class
     is also applied to the `<th>` header of the column associated with this field.
+    For example, to align the contents of some column to the right, use `css_class: text-right`
   * `template` (optional): the name of the custom template used to render the
     contents of the field. This option is fully explained later in this chapter.
   * `type` (optional): the type of data stored in the property, which affects
@@ -213,7 +246,7 @@ The fields of the `list` and `search` views define another option:
     by default except virtual properties (explained later in this chapter) and
     those related with Doctrine associations of any type.
 
-The fields of the `show` view define another option:
+The fields of the `show` view can define another option:
 
   * `help` (optional): the help message displayed below the field contents.
 
@@ -373,6 +406,42 @@ easy_admin:
 
 The main limitation of virtual properties is that you cannot sort listings
 using these fields.
+
+Sorting Entity Listings
+-----------------------
+
+By default the `list` and `search` views sort the rows in descending order
+according to the value of the primary key. You can sort by any other entity
+property using the `sort` configuration option:
+
+```yaml
+# app/config/config.yml
+easy_admin:
+    entities:
+        User:
+            # ...
+            list:
+                # if the sort order is not specified, 'DESC' is used
+                sort: 'createdAt'
+            search:
+                # use an array to also define the sorting direction
+                sort: ['createdAt', 'ASC']
+
+        Purchase:
+            # ...
+            # the 'sort' option supports Doctrine associations up to one level
+            # (e.g. 'sort: user.name' works but 'sort: user.group.name' won't work)
+            list:
+                sort: 'user.name'
+            search:
+                sort: ['user.name', 'ASC']
+```
+
+The `sort` option of each entity is only used as the default content sorting. If
+the query string includes the optional `sortField` and `sortDirection`
+parameters, their values override this `sort` option. This happens for example
+when defining a different sorting in a custom menu and when clicking on the
+listings columns to reorder the displayed contents.
 
 Filtering Entities
 ------------------
@@ -803,8 +872,11 @@ with a different template according to its type. For example, properties of type
 These are all the available templates for each property type:
 
   * `field_array.html.twig`
-  * `field_association.html.twig`, renders properties that store Doctrine
-    associations.
+  * `field_association.html.twig`, renders the properties defined as Doctrine
+    associations. These relations are by default displayed as links pointing to
+    the `show` action of the related entity. If you prefer to not display those
+    links, disable the `show` action for the related entities with the
+    `disabled_actions` option.
   * `field_bigint.html.twig`
   * `field_boolean.html.twig`
   * `field_date.html.twig`

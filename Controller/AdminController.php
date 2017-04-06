@@ -11,12 +11,15 @@
 
 namespace JavierEguiluz\Bundle\EasyAdminBundle\Controller;
 
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\QueryBuilder;
 use JavierEguiluz\Bundle\EasyAdminBundle\Event\EasyAdminEvents;
+use JavierEguiluz\Bundle\EasyAdminBundle\Exception\EntityRemoveException;
 use JavierEguiluz\Bundle\EasyAdminBundle\Exception\ForbiddenActionException;
 use JavierEguiluz\Bundle\EasyAdminBundle\Exception\NoEntitiesConfiguredException;
 use JavierEguiluz\Bundle\EasyAdminBundle\Exception\UndefinedEntityException;
+use JavierEguiluz\Bundle\EasyAdminBundle\Form\Util\LegacyFormHelper;
 use Pagerfanta\Pagerfanta;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -25,10 +28,10 @@ use Symfony\Component\Form\Form;
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * The controller used to render all the default EasyAdmin actions.
@@ -66,7 +69,7 @@ class AdminController extends Controller
 
         $action = $request->query->get('action', 'list');
         if (!$this->isActionAllowed($action)) {
-            throw new ForbiddenActionException(array('action' => $action, 'entity' => $this->entity['name']));
+            throw new ForbiddenActionException(array('action' => $action, 'entity_name' => $this->entity['name']));
         }
 
         return $this->executeDynamicMethod($action.'<EntityName>Action');
@@ -100,12 +103,14 @@ class AdminController extends Controller
 
         $this->entity = $this->get('easyadmin.config.manager')->getEntityConfiguration($entityName);
 
+        $action = $request->query->get('action', 'list');
         if (!$request->query->has('sortField')) {
-            $request->query->set('sortField', $this->entity['primary_key_field_name']);
+            $sortField = isset($this->entity[$action]['sort']['field']) ? $this->entity[$action]['sort']['field'] : $this->entity['primary_key_field_name'];
+            $request->query->set('sortField', $sortField);
         }
-
-        if (!$request->query->has('sortDirection') || !in_array(strtoupper($request->query->get('sortDirection')), array('ASC', 'DESC'))) {
-            $request->query->set('sortDirection', 'DESC');
+        if (!$request->query->has('sortDirection')) {
+            $sortDirection = isset($this->entity[$action]['sort']['direction']) ? $this->entity[$action]['sort']['direction'] : 'DESC';
+            $request->query->set('sortDirection', $sortDirection);
         }
 
         $this->em = $this->getDoctrine()->getManagerForClass($this->entity['class']);
@@ -170,7 +175,7 @@ class AdminController extends Controller
     /**
      * The method that is executed when the user performs a 'edit' action on an entity.
      *
-     * @return RedirectResponse|Response
+     * @return Response|RedirectResponse
      */
     protected function editAction()
     {
@@ -181,7 +186,7 @@ class AdminController extends Controller
         $entity = $easyadmin['item'];
 
         if ($this->request->isXmlHttpRequest() && $property = $this->request->query->get('property')) {
-            $newValue = 'true' === strtolower($this->request->query->get('newValue'));
+            $newValue = 'true' === mb_strtolower($this->request->query->get('newValue'));
             $fieldsMetadata = $this->entity['list']['fields'];
 
             if (!isset($fieldsMetadata[$property]) || 'toggle' !== $fieldsMetadata[$property]['dataType']) {
@@ -258,7 +263,7 @@ class AdminController extends Controller
     /**
      * The method that is executed when the user performs a 'new' action on an entity.
      *
-     * @return RedirectResponse|Response
+     * @return Response|RedirectResponse
      */
     protected function newAction()
     {
@@ -333,8 +338,12 @@ class AdminController extends Controller
 
             $this->executeDynamicMethod('preRemove<EntityName>Entity', array($entity));
 
-            $this->em->remove($entity);
-            $this->em->flush();
+            try {
+                $this->em->remove($entity);
+                $this->em->flush();
+            } catch (ForeignKeyConstraintViolationException $e) {
+                throw new EntityRemoveException(array('entity_name' => $this->entity['name']));
+            }
 
             $this->executeDynamicMethod('postRemove<EntityName>Entity', array($entity));
 
@@ -612,9 +621,7 @@ class AdminController extends Controller
     {
         $formOptions = $this->executeDynamicMethod('get<EntityName>EntityFormOptions', array($entity, $view));
 
-        $formType = $this->useLegacyFormComponent() ? 'easyadmin' : 'JavierEguiluz\\Bundle\\EasyAdminBundle\\Form\\Type\\EasyAdminFormType';
-
-        return $this->get('form.factory')->createNamedBuilder(strtolower($this->entity['name']), $formType, $entity, $formOptions);
+        return $this->get('form.factory')->createNamedBuilder(mb_strtolower($this->entity['name']), LegacyFormHelper::getType('easyadmin'), $entity, $formOptions);
     }
 
     /**
@@ -642,7 +649,7 @@ class AdminController extends Controller
      * @param array  $entityProperties
      * @param string $view
      *
-     * @return Form
+     * @return FormInterface
      *
      * @throws \Exception
      */
@@ -677,10 +684,10 @@ class AdminController extends Controller
      * the deletion of the entity are always performed with the 'DELETE' HTTP method,
      * which requires a form to work in the current browsers.
      *
-     * @param string $entityName
-     * @param int    $entityId
+     * @param string     $entityName
+     * @param int|string $entityId   When reusing the delete form for multiple entities, a pattern string is passed instead of an integer
      *
-     * @return Form
+     * @return Form|FormInterface
      */
     protected function createDeleteForm($entityName, $entityId)
     {
@@ -689,9 +696,9 @@ class AdminController extends Controller
             ->setAction($this->generateUrl('easyadmin', array('action' => 'delete', 'entity' => $entityName, 'id' => $entityId)))
             ->setMethod('DELETE')
         ;
-
-        $submitButtonType = $this->useLegacyFormComponent() ? 'submit' : 'Symfony\\Component\\Form\\Extension\\Core\\Type\\SubmitType';
-        $formBuilder->add('submit', $submitButtonType, array('label' => 'delete_modal.action', 'translation_domain' => 'EasyAdminBundle'));
+        $formBuilder->add('submit', LegacyFormHelper::getType('submit'), array('label' => 'delete_modal.action', 'translation_domain' => 'EasyAdminBundle'));
+        // needed to avoid submitting empty delete forms (see issue #1409)
+        $formBuilder->add('_easyadmin_delete_flag', LegacyFormHelper::getType('hidden'), array('data' => '1'));
 
         return $formBuilder->getForm();
     }
@@ -747,16 +754,6 @@ class AdminController extends Controller
         }
 
         return call_user_func_array(array($this, $methodName), $arguments);
-    }
-
-    /**
-     * Returns true if the legacy Form component is being used by the application.
-     *
-     * @return bool
-     */
-    private function useLegacyFormComponent()
-    {
-        return false === class_exists('Symfony\\Component\\Form\\Util\\StringUtil');
     }
 
     /**

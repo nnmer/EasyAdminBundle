@@ -49,12 +49,18 @@ class QueryBuilder
             ->from($entityConfig['class'], 'entity')
         ;
 
+        $isSortedByDoctrineAssociation = false !== strpos($sortField, '.');
+        if ($isSortedByDoctrineAssociation) {
+            $sortFieldParts = explode('.', $sortField);
+            $queryBuilder->leftJoin('entity.'.$sortFieldParts[0], $sortFieldParts[0]);
+        }
+
         if (!empty($dqlFilter)) {
             $queryBuilder->andWhere($dqlFilter);
         }
 
         if (null !== $sortField) {
-            $queryBuilder->orderBy('entity.'.$sortField, $sortDirection);
+            $queryBuilder->orderBy(sprintf('%s%s', $isSortedByDoctrineAssociation ? '' : 'entity.', $sortField), $sortDirection);
         }
 
         return $queryBuilder;
@@ -82,23 +88,44 @@ class QueryBuilder
             ->from($entityConfig['class'], 'entity')
         ;
 
+        $isSortedByDoctrineAssociation = false !== strpos($sortField, '.');
+        if ($isSortedByDoctrineAssociation) {
+            $sortFieldParts = explode('.', $sortField);
+            $queryBuilder->leftJoin('entity.'.$sortFieldParts[0], $sortFieldParts[0]);
+        }
+
+        $isSearchQueryNumeric = is_numeric($searchQuery);
+        $isSearchQuerySmallInteger = is_int($searchQuery) && abs($searchQuery) <= 32767;
+        $isSearchQueryInteger = is_int($searchQuery) && abs($searchQuery) <= PHP_INT_MAX;
+        $isSearchQueryUuid = 1 === preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $searchQuery);
+        $lowerSearchQuery = mb_strtolower($searchQuery);
+
         $queryParameters = array();
         foreach ($entityConfig['search']['fields'] as $name => $metadata) {
-            $isNumericField = in_array($metadata['dataType'], array('integer', 'number', 'smallint', 'bigint', 'decimal', 'float'));
-            $isTextField = in_array($metadata['dataType'], array('string', 'text', 'guid'));
+            $isSmallIntegerField = 'smallint' === $metadata['dataType'];
+            $isIntegerField = 'integer' === $metadata['dataType'];
+            $isNumericField = in_array($metadata['dataType'], array('number', 'bigint', 'decimal', 'float'));
+            $isTextField = in_array($metadata['dataType'], array('string', 'text'));
+            $isGuidField = 'guid' === $metadata['dataType'];
 
-            if ($isNumericField && is_numeric($searchQuery)) {
-                $queryBuilder->orWhere(sprintf('entity.%s = :exact_query', $name));
+            // this complex condition is needed to avoid issues on PostgreSQL databases
+            if (
+                $isSmallIntegerField && $isSearchQuerySmallInteger ||
+                $isIntegerField && $isSearchQueryInteger ||
+                $isNumericField && $isSearchQueryNumeric
+            ) {
+                $queryBuilder->orWhere(sprintf('entity.%s = :numeric_query', $name));
                 // adding '0' turns the string into a numeric value
-                $queryParameters['exact_query'] = 0 + $searchQuery;
+                $queryParameters['numeric_query'] = 0 + $searchQuery;
+            } elseif ($isGuidField && $isSearchQueryUuid) {
+                $queryBuilder->orWhere(sprintf('entity.%s = :uuid_query', $name));
+                $queryParameters['uuid_query'] = $searchQuery;
             } elseif ($isTextField) {
-                $searchQuery = strtolower($searchQuery);
-
                 $queryBuilder->orWhere(sprintf('LOWER(entity.%s) LIKE :fuzzy_query', $name));
-                $queryParameters['fuzzy_query'] = '%'.$searchQuery.'%';
+                $queryParameters['fuzzy_query'] = '%'.$lowerSearchQuery.'%';
 
                 $queryBuilder->orWhere(sprintf('LOWER(entity.%s) IN (:words_query)', $name));
-                $queryParameters['words_query'] = explode(' ', $searchQuery);
+                $queryParameters['words_query'] = explode(' ', $lowerSearchQuery);
             }
         }
 
@@ -111,7 +138,7 @@ class QueryBuilder
         }
 
         if (null !== $sortField) {
-            $queryBuilder->orderBy('entity.'.$sortField, $sortDirection ?: 'DESC');
+            $queryBuilder->orderBy(sprintf('%s%s', $isSortedByDoctrineAssociation ? '' : 'entity.', $sortField), $sortDirection ?: 'DESC');
         }
 
         return $queryBuilder;

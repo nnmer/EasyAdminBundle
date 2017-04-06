@@ -11,8 +11,8 @@
 
 namespace JavierEguiluz\Bundle\EasyAdminBundle\Form\Type;
 
-use JavierEguiluz\Bundle\EasyAdminBundle\Form\Type\Configurator\TypeConfiguratorInterface;
 use JavierEguiluz\Bundle\EasyAdminBundle\Configuration\ConfigManager;
+use JavierEguiluz\Bundle\EasyAdminBundle\Form\Type\Configurator\TypeConfiguratorInterface;
 use JavierEguiluz\Bundle\EasyAdminBundle\Form\Util\LegacyFormHelper;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -54,7 +54,7 @@ class EasyAdminFormType extends AbstractType
         $entity = $options['entity'];
         $view = $options['view'];
         $entityConfig = $this->configManager->getEntityConfig($entity);
-        $entityProperties = $entityConfig[$view]['fields'];
+        $entityProperties = isset($entityConfig[$view]['fields']) ? $entityConfig[$view]['fields'] : array();
         $formGroups = array();
         $currentFormGroup = null;
 
@@ -164,7 +164,7 @@ class EasyAdminFormType extends AbstractType
     {
         return function (Options $options, $value) {
             return array_replace(array(
-                'id' => sprintf('%s-%s-form', $options['view'], strtolower($options['entity'])),
+                'id' => sprintf('%s-%s-form', $options['view'], mb_strtolower($options['entity'])),
             ), $value);
         };
     }

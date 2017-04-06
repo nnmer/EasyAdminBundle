@@ -11,10 +11,10 @@
 
 namespace JavierEguiluz\Bundle\EasyAdminBundle\DataCollector;
 
+use JavierEguiluz\Bundle\EasyAdminBundle\Configuration\ConfigManager;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
-use JavierEguiluz\Bundle\EasyAdminBundle\Configuration\ConfigManager;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\HtmlDumper;
 use Symfony\Component\Yaml\Yaml;
@@ -27,6 +27,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 class EasyAdminDataCollector extends DataCollector
 {
+    /** @var ConfigManager */
     private $configManager;
 
     public function __construct(ConfigManager $configManager)
@@ -34,6 +35,9 @@ class EasyAdminDataCollector extends DataCollector
         $this->configManager = $configManager;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function collect(Request $request, Response $response, \Exception $exception = null)
     {
         $backendConfig = $this->configManager->getBackendConfig();
@@ -48,6 +52,11 @@ class EasyAdminDataCollector extends DataCollector
         );
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return array|null
+     */
     private function getEasyAdminParameters(Request $request)
     {
         // 'admin' is the deprecated route name that will be removed in version 2.0.
@@ -64,21 +73,33 @@ class EasyAdminDataCollector extends DataCollector
         );
     }
 
+    /**
+     * @return int
+     */
     public function getNumEntities()
     {
         return $this->data['num_entities'];
     }
 
+    /**
+     * @return array
+     */
     public function getRequestParameters()
     {
         return $this->data['request_parameters'];
     }
 
+    /**
+     * @return array
+     */
     public function getCurrentEntityConfig()
     {
         return $this->data['current_entity_configuration'];
     }
 
+    /**
+     * @return array
+     */
     public function getBackendConfig()
     {
         return $this->data['backend_configuration'];
@@ -95,7 +116,6 @@ class EasyAdminDataCollector extends DataCollector
      */
     public function dump($variable)
     {
-        $dumpedData = '';
         if (class_exists('Symfony\Component\VarDumper\Dumper\HtmlDumper')) {
             $cloner = new VarCloner();
             $dumper = new HtmlDumper();
@@ -111,6 +131,9 @@ class EasyAdminDataCollector extends DataCollector
         return $dumpedData;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getName()
     {
         return 'easyadmin';
