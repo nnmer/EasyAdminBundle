@@ -1,22 +1,17 @@
-**❮ NOTE ❯** This bundle releases new versions on a regular basis. Make sure
-to update your dependencies frequently to get the latest version.
-[Check out the changelog](https://github.com/javiereguiluz/EasyAdminBundle/releases)
-to learn about the new features and read the [UPGRADE guide](https://github.com/javiereguiluz/EasyAdminBundle/blob/master/UPGRADE.md).
-
------
-
 EasyAdmin
 =========
 
-[![Build Status](https://travis-ci.org/javiereguiluz/EasyAdminBundle.svg?branch=master)](https://travis-ci.org/javiereguiluz/EasyAdminBundle)
-[![SensioLabsInsight](https://insight.sensiolabs.com/projects/a3bfb8d9-7b2d-47ab-a95f-382af395bd51/mini.png)](https://insight.sensiolabs.com/projects/a3bfb8d9-7b2d-47ab-a95f-382af395bd51)
-[![Coverage Status](https://coveralls.io/repos/javiereguiluz/EasyAdminBundle/badge.svg?branch=master)](https://coveralls.io/r/javiereguiluz/EasyAdminBundle?branch=master)
-[![Symfony](https://img.shields.io/badge/Symfony-%202.x%20and%203.x-green.svg "Supports Symfony 2.x and 3.x")](https://symfony.com/)
+[![Tests][1]][2] [![Code Quality][3]][4] [![Code Coverage][5]][6] [![Symfony 2.x and 3.x][7]][8]
+
+EasyAdmin creates administration backends for your Symfony applications with
+unprecedented simplicity.
 
 <img src="https://raw.githubusercontent.com/javiereguiluz/EasyAdminBundle/master/Resources/doc/images/easyadmin-promo.png" alt="Symfony Backends created with EasyAdmin" align="right" />
 
-EasyAdmin lets you create administration backends for Symfony applications
-with unprecedented simplicity.
+* [Installation](#installation)
+* [Creating Your First Backend](#your-first-backend)
+* [Documentation](#documentation)
+* [Demo application](#demo-application)
 
 **Features**
 
@@ -36,42 +31,36 @@ with unprecedented simplicity.
 Documentation
 -------------
 
-#### Getting Started Guide
-
-The [Getting Started Guide](Resources/doc/getting-started.md) explains how to
-install the bundle and how to create your first backend. This guide is a must-
-read before using EasyAdmin.
-
 #### The Book
 
-  * [Chapter 1 - Basic configuration](Resources/doc/book/1-basic-configuration.md)
-  * [Chapter 2 - Design configuration](Resources/doc/book/2-design-configuration.md)
-  * [Chapter 3 - `list`, `search` and `show` views configuration](Resources/doc/book/3-list-search-show-configuration.md)
-  * [Chapter 4 - `edit` and `new` views configuration](Resources/doc/book/4-edit-new-configuration.md)
-  * [Chapter 5 - Actions configuration](Resources/doc/book/5-actions-configuration.md)
-  * [Chapter 6 - Menu configuration](Resources/doc/book/6-menu-configuration.md)
-  * [Chapter 7 - Creating complex and dynamic backends](Resources/doc/book/7-complex-dynamic-backends.md)
-  * [Chapter 8 - About this project](Resources/doc/book/8-about.md)
-  * [Appendix - Full configuration reference](Resources/doc/book/configuration-reference.md)
+  * [Chapter 0 - Installation and your first backend](Resources/doc/book/installation.rst)
+  * [Chapter 1 - Basic configuration](Resources/doc/book/basic-configuration.rst)
+  * [Chapter 2 - Design configuration](Resources/doc/book/design-configuration.rst)
+  * [Chapter 3 - `list`, `search` and `show` views configuration](Resources/doc/book/list-search-show-configuration.rst)
+  * [Chapter 4 - `edit` and `new` views configuration](Resources/doc/book/edit-new-configuration.rst)
+  * [Chapter 5 - Actions configuration](Resources/doc/book/actions-configuration.rst)
+  * [Chapter 6 - Menu configuration](Resources/doc/book/menu-configuration.rst)
+  * [Chapter 7 - Creating complex and dynamic backends](Resources/doc/book/complex-dynamic-backends.rst)
+  * [Chapter 8 - About this project](Resources/doc/misc/about.rst)
+  * [Appendix - Full configuration reference](Resources/doc/book/configuration-reference.rst)
 
 #### Tutorials
 
-  * [How to translate the backend](Resources/doc/tutorials/i18n.md)
-  * [How to define custom actions](Resources/doc/tutorials/custom-actions.md)
-  * [How to define custom options for entity properties](Resources/doc/tutorials/custom-property-options.md)
-  * [How to manage configuration for complex backends](Resources/doc/tutorials/complex-backend-config.md)
-  * [Tips and tricks](Resources/doc/tutorials/tips-and-tricks.md)
+  * [How to translate the backend](Resources/doc/tutorials/i18n.rst)
+  * [How to define custom actions](Resources/doc/tutorials/custom-actions.rst)
+  * [How to define custom options for entity properties](Resources/doc/tutorials/custom-property-options.rst)
+  * [How to manage configuration for complex backends](Resources/doc/tutorials/complex-backend-config.rst)
+  * [Tips and tricks](Resources/doc/tutorials/tips-and-tricks.rst)
 
-#### Third-party bundles/services integrations
+#### Integrations with third-party bundles/services
 
-  * [How to upload files and images with VichUploaderBundle](Resources/doc/tutorials/upload-files-and-images.md)
-  * [How to integrate FOSUserBundle to manage users](Resources/doc/tutorials/fosuserbundle-integration.md)
-  * [How to use a WYSIWYG editor with IvoryCKEditorBundle](Resources/doc/tutorials/wysiwyg-editor.md)
-  * [How To integrate FOSRestBundle and EasyAdmin](Resources/doc/tutorials/fosrestbundle-integration.md)
+  * [How to upload files and images with VichUploaderBundle](Resources/doc/integration/vichuploaderbundle.rst)
+  * [How to integrate FOSUserBundle to manage users](Resources/doc/integration/fosuserbundle.rst)
+  * [How to use a WYSIWYG editor with IvoryCKEditorBundle](Resources/doc/integration/ivoryckeditorbundle.rst)
+  * [How To integrate FOSRestBundle and EasyAdmin](Resources/doc/integration/fosrestbundle.rst)
 
 > **❮ NOTE ❯** you are reading the documentation of the bundle's **development**
-> version. You can also [read the documentation of the latest stable version ➜]
-> (https://github.com/javiereguiluz/EasyAdminBundle/tree/v1.16.8/).
+> version. You can also [read the documentation of the latest stable version ➜](https://github.com/javiereguiluz/EasyAdminBundle/tree/v1.16.9/).
 
 Demo Application
 ----------------
@@ -166,3 +155,14 @@ License
 -------
 
 This software is published under the [MIT License](LICENSE.md)
+
+[1]: https://travis-ci.org/javiereguiluz/EasyAdminBundle.svg?branch=master
+[2]: https://travis-ci.org/javiereguiluz/EasyAdminBundle
+[3]: https://insight.sensiolabs.com/projects/a3bfb8d9-7b2d-47ab-a95f-382af395bd51/mini.png
+[4]: https://insight.sensiolabs.com/projects/a3bfb8d9-7b2d-47ab-a95f-382af395bd51
+[5]: https://coveralls.io/repos/javiereguiluz/EasyAdminBundle/badge.svg?branch=master
+[6]: https://coveralls.io/r/javiereguiluz/EasyAdminBundle?branch=master
+[7]: https://img.shields.io/badge/Symfony-%202.x%20and%203.x-green.svg
+[8]: https://symfony.com/
+
+
